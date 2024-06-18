@@ -14,8 +14,7 @@ meta$better_id = paste(meta$SubjectID, meta$timepoint, meta$SampleType, sep = ".
 print(dim(meta))
 
 ## ------ Load ASV data and collapse replicates -----------
-asv <- read.table("../qiime_data/DADA2/feature_table_clean.txt",
-                    header = TRUE, row.names = 1, sep = "\t") %>% t()
+asv = readRDS("../qiime_data/DADA2/feature_table_clean.rds")
 asv = asv[rownames(asv) != "Undetermined",]
 
 ## filter super rare ASVs to make everything take less time
@@ -37,11 +36,12 @@ rownames(collapsed_mat) = collapsed$ID
 print(dim(collapsed_mat))
 
 write.csv(collapsed_mat, "../data/ASV_unfiltered.csv")
+saveRDS(collapsed_mat, "../data/ASV_unfiltered.rds")
 
 ## ------------- get just BAL samples and handle re-runs. 
 BAL = read.csv("../data/BAL_meta_unfiltered.csv", row.names = 1)
 asv_BAL = collapsed[ collapsed$ID %in% rownames(BAL),] 
 write.csv(asv_BAL, "../data/BAL_asv_unfiltered.csv", row.names = F)
+saveRDS(asv_BAL, "../data/BAL_asv_unfiltered.rds")
 
-read_asv = read.table("../data/BAL_asv_unfiltered.csv", sep = ',', header = T, check.names = F)
 

@@ -121,7 +121,13 @@ CLAD_by_patient = group_by(clean_CLAD, microbiome_pid) %>%
 CLAD_by_patient$clad_free_time = ifelse(is.na(CLAD_by_patient$time_to_CLAD), 
                                     CLAD_by_patient$days_from_transplant, CLAD_by_patient$time_to_CLAD)
 CLAD_by_patient$status = as.numeric( !(is.na(CLAD_by_patient$time_to_CLAD)))
-write.csv(CLAD_by_patient, "../data/merged_KM_data.csv")
+
+## before writing, add in relevant demographic information
+demo = read.csv("../data/2024-05-03additionalmicrodata.csv")
+demo = demo[,c("microbiome_pid", "age", "gender", "BMI")]
+demo_CLAD = merge(CLAD_by_patient, demo, by = "microbiome_pid")
+
+write.csv(demo_CLAD, "../data/merged_KM_data.csv")
 
 
 ## %%%%%%%%%% Get the phylum level data cleaned up too %%%%%%%%%%%%%%%%%%%%%%%%%%%
