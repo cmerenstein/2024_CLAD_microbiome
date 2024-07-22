@@ -46,7 +46,7 @@ KM$microbiome_pid = as.character(KM$microbiome_pid)
 
 transplant = diversity_meta[!(is.na(diversity_meta$timepoint)) & diversity_meta$timepoint != "H",]
 transplant$timepoint = factor(transplant$timepoint,
-                                levels = c("H", "D", "R", "RT", "DC", "6W", "3M", "6M", "12M"))
+                                levels = c("H", "D", "R", "DC", "6W", "3M", "6M", "12M"))
 transplant$run = as.factor(transplant$run)
 merged = merge(KM, transplant, by.x = "microbiome_pid", by.y = "SubjectID")
 
@@ -59,8 +59,17 @@ cox_PH_timepoint = lapply(unique(transplant$timepoint), function(tp){
 do.call("rbind", cox_PH_timepoint)
 
 
+pdf("../figures/diversity_CLAD.pdf")
 
-
+for( tp in c("D", "R", "DC", "6W", "3M", "6M", "12M")){
+    filtered = filter(merged, timepoint == tp & metric == "simpson")
+    quantiles = c(-Inf, quantile(filtered$value, c(.25, .75)), Inf)
+    filtered$diversity_bins = cut(filtered$value, quantiles, labels = c("low", "mid", "high"))
+    fit = survfit(Surv(clad_free_time, status) ~ diversity_bins, data = filtered)
+    print(ggsurvplot(fit, conf.int = T, pval = T, 
+            break.x.by = 365, xlim = c(0, 2922), title = tp))
+}
+dev.off()
 
 
 

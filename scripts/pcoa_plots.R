@@ -23,6 +23,7 @@ rare_weighted = rare_weighted[meta$SampleID, meta$SampleID]
 
 ## Clad onset data
 KM = read.csv("../data/merged_KM_data.csv", row.names = 1)
+KM$microbiome_pid = as.character(KM$microbiome_pid)
 CLAD_status = KM[,c("microbiome_pid", "status", "clad_free_time")]
 
 meta_CLAD = merge(meta, CLAD_status, by.x = "SubjectID", by.y = "microbiome_pid", all.x = T)
@@ -65,6 +66,19 @@ null = lapply(unique(transplant$timepoint), function(tp){
     print(adonis(filt_dist~ status, data = filt)$aov.tab)
 })
 
+## ---- find out what's up with the cluster that looks like it has a lot of pseudomonas ---
+genus = read.csv("../data/BAL_genus_filtered.csv", row.names = 1)
+genus = genus[ rownames(pcoa_df_filter),]
+percent = genus / rowSums(genus)
+
+cluster = pcoa_df_filter[ pcoa_df_filter$Axis.1 >= .1 & pcoa_df_filter$timepoint == "D",]
+percent_cluster = percent[rownames(cluster),] %>% round(2)
+percent_cluster[,colSums(percent_cluster) > .05]
+
+cluster = pcoa_df_filter[ pcoa_df_filter$Axis.1 >= .1 & pcoa_df_filter$timepoint == "12M",]
+percent_cluster = percent[rownames(cluster),] %>% round(2)
+percent_cluster[,colSums(percent_cluster) > .05]
+
 ## --------- Cox PH ----------------------------
 cox_list = lapply(unique(transplant$timepoint), function(tp){
     filt = transplant %>% filter(timepoint == tp) %>%
@@ -85,10 +99,7 @@ cox_df$fdr = p.adjust(cox_df$p, "BH")
 arrange(cox_df, p)
 
 ## ------------- See what's correlated to what --------------------
-genus = read.csv("../data/BAL_genus_filtered.csv", row.names = 1)
-genus = genus[ rownames(vectors),]
-percent = genus / rowSums(genus)
-common = percent[, colMeans(percent) > .05]
+common = percent[, colMeans(percent) > .05 | colnames(percent) == "o__Enterobacterales_unassigned"]
 
 fit = envfit(vectors, common)
 genus_fit = fit$vectors$arrows %>% as.data.frame
@@ -103,6 +114,13 @@ ggplot(pcoa_df_filter, aes(x = Axis.1, y = Axis.2)) +
     geom_text(data = genus_fit, aes(x = Axis.1 / 2, y = Axis.2 / 2, label = genus))
 dev.off()
 
+M12 = meta_CLAD[ !(is.na(meta_CLAD$status)) & meta_CLAD$timepoint == "12M",]
+wilcox.test( percent[rownames(M12), "g__Pseudomonas"], M12$status)
 
+D = meta_CLAD[ !(is.na(meta_CLAD$status)) & meta_CLAD$timepoint == "D",]
+data.frame( pres = genus[rownames(D), "o__Enterobacterales_unassigned"] > 10,
+            status = D$status) %>%
+            table() %>%
+            chisq.test()
 
 

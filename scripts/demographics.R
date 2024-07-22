@@ -5,7 +5,7 @@ library(survminer)
 ## ---- Read in time to clad & censor data -----
 KM = read.csv("../data/merged_KM_data.csv")
 KM$microbiome_pid = as.character(KM$microbiome_pid)
-KM = KM[,c("microbiome_pid", "clad_free_time", "status", "days_from_transplant")]
+KM = KM[,c("transplant_id", "microbiome_pid", "clad_free_time", "status", "days_from_transplant")]
 
 ## ---- Read in metadata and merge ----------------
 meta = read.csv("../data/BAL_meta_filtered.csv", row.names = 1)

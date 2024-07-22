@@ -46,11 +46,18 @@ ggsurvplot(fit3, conf.int=TRUE, pval=TRUE, break.x.by = 365,
             palette = c("#0a6102", "#ffa217"), xlim = c(0, 2922))
 dev.off()
 
-summary(coxph( Surv(clad_free_time, status) ~ class, data = KM_by_patient))
-summary(coxph( Surv(clad_free_time, status) ~ hi_strep, data = KM_by_patient))
-summary(coxph( Surv(clad_free_time, status) ~ hi_prevotella, data = KM_by_patient))
-summary(coxph( Surv(clad_free_time, status) ~ hi_strep + age, data = KM_by_patient))
+PGD = read.csv("../data/composite_PGD_score.csv", row.names = 1)
+KM_by_patient$PGD = PGD[KM_by_patient$microbiome_pid, "PGD_score"]
+
+summary(coxph( Surv(clad_free_time, status) ~ hi_strep + age + PGD, data = KM_by_patient))
+summary(coxph( Surv(clad_free_time, status) ~ hi_prevotella + age + PGD, data = KM_by_patient))
+
+
+summary(coxph( Surv(clad_free_time, status) ~ hi_prevotella + age + PGD, data = KM_by_patient))
 summary(coxph( Surv(clad_free_time, status) ~ hi_prevotella + age, data = KM_by_patient))
+summary(coxph( Surv(clad_free_time, status) ~ hi_prevotella + PGD, data = KM_by_patient))
+summary(coxph( Surv(clad_free_time, status) ~ hi_prevotella , data = KM_by_patient))
+
 
 ###---------------------------------------------------------------
 merged$prev_strep = log10( 1 + genus[,"g__Streptococcus"]) - 

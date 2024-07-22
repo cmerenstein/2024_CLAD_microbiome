@@ -28,6 +28,33 @@ genus = genus[rownames(genus) %in% rownames(meta),]
 genus_df = data.frame(sample_rep = rownames(genus), genus)
 print(dim(genus_df))
 
+## --------- Made data table for SRA upload -----------
+fq1 = sapply(list.files("../../dmux/all_fastq", pattern = "_R1"), function(d){
+                strsplit(d,"_")[[1]][1]})
+fq1_files = names(fq1)
+names(fq1_files) = fq1
+
+fq2 = sapply(list.files("../../dmux/all_fastq", pattern = "_R2"), function(d){
+                strsplit(d,"_")[[1]][1]})
+fq2_files = names(fq2)
+names(fq2_files) = fq2
+
+sra_meta = meta[ meta$original.sample.ids %in% fq1 | meta$previous_id %in% fq1,]
+sra_meta$fq1 = ifelse( !is.na( fq1_files[ sra_meta$original.sample.ids]),
+                    fq1_files[sra_meta$original.sample.ids],
+                    fq1_files[sra_meta$previous_id])
+sra_meta$fq2 = ifelse( !is.na( fq2_files[ sra_meta$original.sample.ids]),
+                    fq2_files[sra_meta$original.sample.ids],
+                    fq2_files[sra_meta$previous_id])
+write.csv(sra_meta, "../data/sra_metadata.csv", row.names = F)
+sra_meta$host = ifelse(sra_meta$timepoint == "PW", "NA", "Homo sapiens")
+biosample = unique(sra_meta[, c("SampleID", "SubjectID", "SampleType", 
+                                "run", "DateCollected",
+                                "transplant", "timepoint", "diagnosis", "host")])
+write.csv(biosample, "../data/sra_biosample.csv", row.names = F)
+
+
+
 ## ------------------ combine replicates ----------------------------
 genus_df = data.frame(sample = rownames(genus), genus)
 tidy = gather(genus_df, "genus", "count", -sample)
